@@ -1,0 +1,51 @@
+- id: "start"
+  payload: "start"
+  next:
+    - "1"
+  after_call:
+    - "after1"
+  before_call:
+    - "before1"
+  initial_state: true
+
+- id: "1"
+  payload: "1"
+  next:
+    - "1"
+    - "2"
+    - "3"
+  after_call:
+    - "after2"
+  before_call:
+    - "before2"
+
+- id: "2"
+  payload: "2"
+  next:
+    - "1"
+    - "2"
+    - "3"
+  after_call:
+    - "after3"
+  before:
+    - "before3"
+
+- id: "3"
+  payload: "3"
+  next:
+    - "1"
+    - "2"
+    - "3"
+    - "end"
+  after_call:
+    - "after1"
+    - "after2"
+    - "after3"
+  before_call:
+    - "before1"
+    - "before2"
+    - "before3"
+
+- id: "end"
+  payload: "end"
+  final_state: true
