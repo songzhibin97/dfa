@@ -13,12 +13,12 @@ type DFA struct {
 	config string
 
 	// 加载所有状态
-	effectiveState map[string]status
+	effectiveState map[string]MetaStatus
 
-	start status
+	start MetaStatus
 }
 
-func (d *DFA) Get(key string) *status {
+func (d *DFA) Get(key string) *MetaStatus {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	v := d.effectiveState[key]
@@ -28,9 +28,9 @@ func (d *DFA) Get(key string) *status {
 func NewDfa(config string) (*DFA, error) {
 	ret := &DFA{
 		config:         config,
-		effectiveState: make(map[string]status),
+		effectiveState: make(map[string]MetaStatus),
 	}
-	var _status []status
+	var _status []MetaStatus
 	err := yaml.Unmarshal([]byte(config), &_status)
 	if err != nil {
 		return nil, err

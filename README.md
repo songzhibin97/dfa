@@ -44,9 +44,94 @@ func main() {
 	}
 	s := NewStatus(dfa)
 
-	s.Peek() // 查看当前状态下可转移的选项
+	// 查看当前状态下可转移的选项 
+	s.Peek()  // [1]
 	
-	s.Transfer("1") // 转移到状态1
+	s.Transfer("bad") // false 
+	
+	 // 转移到状态1
+	s.Transfer("1")
+	s.Peek()  // [1,2,3]
+	
+	// 转移到状态3
+	s.Transfer("3")  
+	s.Peek()  // [1,2,3,end]
+	
+	s.Transfer("end")
+	s.Peek()  // []
+	
+	ns, _ := json.Marshal(s.Circulation())
+	t.Log(string(ns))
+	// 展示了所有的状态转移
+	/*
+	[
+    {
+        "id": "start",
+        "next": [
+            "1"
+        ],
+        "payload": "start",
+        "initial_state": true,
+        "final_state": false,
+        "after_call": [
+            "after1"
+        ],
+        "before_call": [
+            "before1"
+        ]
+    },
+    {
+        "id": "1",
+        "next": [
+            "1",
+            "2",
+            "3"
+        ],
+        "payload": "1",
+        "initial_state": false,
+        "final_state": false,
+        "after_call": [
+            "after2"
+        ],
+        "before_call": [
+            "before2"
+        ]
+    },
+    {
+        "id": "3",
+        "next": [
+            "1",
+            "2",
+            "3",
+            "end"
+        ],
+        "payload": "3",
+        "initial_state": false,
+        "final_state": false,
+        "after_call": [
+            "after1",
+            "after2",
+            "after3"
+        ],
+        "before_call": [
+            "before1",
+            "before2",
+            "before3"
+        ]
+    },
+    {
+        "id": "end",
+        "next": null,
+        "payload": "end",
+        "initial_state": false,
+        "final_state": true,
+        "after_call": null,
+        "before_call": null
+    }
+]
+	
+	 */
+	
 }
 
 ```

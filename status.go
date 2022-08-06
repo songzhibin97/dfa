@@ -43,14 +43,14 @@ type Automaton interface {
 	IsFinalState() bool
 
 	// Circulation 所有的流转状态
-	Circulation() []Automaton
+	Circulation() []MetaStatus
 }
 
 type Status struct {
-	lock   sync.Mutex
-	status *status
+	lock sync.Mutex
+	*MetaStatus
 	dfa    *DFA
-	Record []Automaton `json:"record"`
+	Record []MetaStatus `json:"record"`
 }
 
 func NewStatus(dfa *DFA) *Status {
@@ -59,32 +59,32 @@ func NewStatus(dfa *DFA) *Status {
 	}
 }
 
-func NewStatusWithStatus(dfa *DFA, s *status, records ...Automaton) *Status {
+func NewStatusWithStatus(dfa *DFA, s *MetaStatus, records ...MetaStatus) *Status {
 	return &Status{
-		dfa:    dfa,
-		status: s,
-		Record: records,
+		dfa:        dfa,
+		MetaStatus: s,
+		Record:     records,
 	}
 }
 
 func (s *Status) load() {
-	if s.status == nil {
-		s.status = s.dfa.Get(s.dfa.start.ID)
+	if s.MetaStatus == nil {
+		s.MetaStatus = s.dfa.Get(s.dfa.start.ID)
 	}
-	if s.status.load {
+	if s.MetaStatus.load {
 		return
 	}
-	s.status.load = true
-	s.status.next = make(map[string]*status)
-	for _, nid := range s.status.Next {
-		s.status.next[nid] = s.dfa.Get(nid)
+	s.MetaStatus.load = true
+	s.MetaStatus.next = make(map[string]*MetaStatus)
+	for _, nid := range s.MetaStatus.Next {
+		s.MetaStatus.next[nid] = s.dfa.Get(nid)
 	}
 }
 
-type status struct {
+type MetaStatus struct {
 	ID           string   `json:"id" yaml:"id"`
 	Next         []string `json:"next" yaml:"next"`
-	next         map[string]*status
+	next         map[string]*MetaStatus
 	Payload      interface{} `json:"payload" yaml:"payload"`
 	InitialState bool        `json:"initial_state" yaml:"initial_state"`
 	FinalState   bool        `json:"final_state" yaml:"final_state"`
@@ -99,38 +99,32 @@ func (s *Status) Transfer(id string) bool {
 
 	s.load()
 
-	ret, ok := s.status.next[id]
+	ret, ok := s.MetaStatus.next[id]
 	if !ok {
 		return false
 	}
-	for i := len(s.status.AfterCall) - 1; i >= 0; i-- {
-		after, ok := Registry.Get(s.status.AfterCall[i])
+	for i := len(s.MetaStatus.AfterCall) - 1; i >= 0; i-- {
+		after, ok := Registry.Get(s.MetaStatus.AfterCall[i])
 		if !ok {
 			continue
 		}
 		after(s)
 	}
 
-	s.Record = append(s.Record, &Status{
-		status: s.status,
-		Record: s.Record,
-	})
+	s.Record = append(s.Record, *s.MetaStatus)
 
-	s.status = ret
+	s.MetaStatus = ret
 
-	for i := len(s.status.BeforeCall) - 1; i >= 0; i-- {
-		before, ok := Registry.Get(s.status.BeforeCall[i])
+	for i := len(s.MetaStatus.BeforeCall) - 1; i >= 0; i-- {
+		before, ok := Registry.Get(s.MetaStatus.BeforeCall[i])
 		if !ok {
 			continue
 		}
 		before(s)
 	}
 
-	if s.status.FinalState {
-		s.Record = append(s.Record, &Status{
-			status: s.status,
-			Record: s.Record,
-		})
+	if s.MetaStatus.FinalState {
+		s.Record = append(s.Record, *s.MetaStatus)
 	}
 
 	return true
@@ -143,20 +137,20 @@ func (s *Status) Peek() *OptionalAutomaton {
 	s.load()
 
 	oa := NewOptionalStatus()
-	for k, v := range s.status.next {
+	for k, v := range s.MetaStatus.next {
 		oa.Add(k, &Status{
-			status: v,
-			Record: s.Record,
+			MetaStatus: v,
+			Record:     s.Record,
 		})
 	}
 	return oa
 }
 
 func (s *Status) IsFinalState() bool {
-	return s.status.FinalState
+	return s.MetaStatus.FinalState
 }
 
-func (s *Status) Circulation() []Automaton {
+func (s *Status) Circulation() []MetaStatus {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
