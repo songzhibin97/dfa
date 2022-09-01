@@ -1,10 +1,24 @@
 package dfa
 
-import "sync"
+import (
+	"strings"
+	"sync"
+)
 
 type OptionalAutomaton struct {
 	lock       sync.Mutex
 	selectList map[string]Automaton
+}
+
+func (o *OptionalAutomaton) String() string {
+	o.lock.Lock()
+	defer o.lock.Unlock()
+
+	b := strings.Builder{}
+	for key := range o.selectList {
+		b.WriteString(key + " ")
+	}
+	return b.String()
 }
 
 // Get 获取状态

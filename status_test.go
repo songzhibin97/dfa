@@ -27,6 +27,10 @@ func Init(t *testing.T) {
 	Registry.Add("before3", func(s *Status) {
 		t.Log("before3", s.Record)
 	})
+
+	Registry.Add("print", func(status *Status) {
+		t.Log("print", status.Payload)
+	})
 }
 
 func Test_Status(t *testing.T) {
@@ -150,6 +154,86 @@ func Test_Demo(t *testing.T) {
 
 	s.Transfer("end")
 	s.Peek() // []
+
+	ns, _ := json.Marshal(s.Circulation())
+	t.Log(string(ns))
+}
+
+func Test_Demo2(t *testing.T) {
+	Init(t)
+	config, err := ioutil.ReadFile("./2.yaml")
+	if err != nil {
+		panic("read meta.yaml error")
+	}
+
+	dfa, err := NewDfa(string(config))
+	if err != nil {
+		panic("new dfa error")
+	}
+	s := NewStatus(dfa)
+	t.Log(s.Peek()) // qingjia
+
+	s.Transfer("qingjia") // juece1
+	t.Log(s.Peek())
+
+	s.Transfer("juece1") // start bingxing
+	t.Log(s.Peek())
+
+	s.Transfer("start") // qingjia
+
+	s.Transfer("qingjia") // juece1
+	t.Log(s.Peek())
+
+	s.Transfer("juece1") // start bingxing
+	t.Log(s.Peek())
+
+	s.Transfer("bingxing") // lingdaoA lingdaoB
+	t.Log(s.Peek())
+
+	s.Transfer("lingdaoA") // juece2
+	t.Log(s.Peek())
+
+	s.Transfer("juece2") // guidang start
+	t.Log(s.Peek())
+
+	s.Transfer("start")
+	t.Log(s.Peek())
+
+	s.Transfer("qingjia") // juece1
+	t.Log(s.Peek())
+
+	s.Transfer("juece1") // start bingxing
+	t.Log(s.Peek())
+
+	s.Transfer("bingxing") // lingdaoA lingdaoB
+	t.Log(s.Peek())
+
+	s.Transfer("lingdaoB") // juece3
+	t.Log(s.Peek())
+
+	s.Transfer("juece3") // guidang qingjia
+	t.Log(s.Peek())
+
+	s.Transfer("qingjia") // juece1
+	t.Log(s.Peek())
+
+	s.Transfer("juece1") // start bingxing
+	t.Log(s.Peek())
+
+	s.Transfer("bingxing") // lingdaoA lingdaoB
+	t.Log(s.Peek())
+
+	s.Transfer("lingdaoA") // juece2
+	t.Log(s.Peek())
+
+	s.Transfer("juece2") // guidang start
+	t.Log(s.Peek())
+
+	s.Transfer("guidang") // end
+	t.Log(s.Peek())
+
+	s.Transfer("end")
+	t.Log(s.Peek())
 
 	ns, _ := json.Marshal(s.Circulation())
 	t.Log(string(ns))
