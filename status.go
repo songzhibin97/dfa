@@ -22,6 +22,17 @@ func (o *OptionalAutomaton) String() string {
 	return b.String()
 }
 
+func (o *OptionalAutomaton) Keys() []string {
+	o.lock.Lock()
+	defer o.lock.Unlock()
+
+	keys := make([]string, 0, len(o.selectList))
+	for key := range o.selectList {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
 // Get 获取状态
 func (o *OptionalAutomaton) Get(key string) (Automaton, bool) {
 	o.lock.Lock()
@@ -91,7 +102,7 @@ func NewStatusWithStatus(dfa *DFA, s *MetaStatus, records ...MetaStatus) *Status
 }
 
 func (s *Status) Save() ([]byte, error) {
-	return json.Marshal(s.Record)
+	return json.Marshal(s)
 }
 
 func Load(config string, save []byte) (*Status, error) {
