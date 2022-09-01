@@ -1,6 +1,7 @@
 package dfa
 
 import (
+	"encoding/json"
 	"strings"
 	"sync"
 )
@@ -73,6 +74,14 @@ func NewStatus(dfa *DFA) *Status {
 	}
 }
 
+func NewStatusWithConfig(config string) (*Status, error) {
+	dfa, err := NewDfa(config)
+	if err != nil {
+		return nil, err
+	}
+	return NewStatus(dfa), nil
+}
+
 func NewStatusWithStatus(dfa *DFA, s *MetaStatus, records ...MetaStatus) *Status {
 	return &Status{
 		dfa:        dfa,
@@ -81,14 +90,32 @@ func NewStatusWithStatus(dfa *DFA, s *MetaStatus, records ...MetaStatus) *Status
 	}
 }
 
+func (s *Status) Save() ([]byte, error) {
+	return json.Marshal(s.Record)
+}
+
+func Load(config string, save []byte) (*Status, error) {
+	dfa, err := NewDfa(config)
+	if err != nil {
+		return nil, err
+	}
+	var s Status
+	err = json.Unmarshal(save, &s)
+	if err != nil {
+		return nil, err
+	}
+	s.dfa = dfa
+	return &s, nil
+}
+
 func (s *Status) load() {
 	if s.MetaStatus == nil {
 		s.MetaStatus = s.dfa.Get(s.dfa.start.ID)
 	}
-	if s.MetaStatus.load {
+	if s.MetaStatus.Load {
 		return
 	}
-	s.MetaStatus.load = true
+	s.MetaStatus.Load = true
 	s.MetaStatus.next = make(map[string]*MetaStatus)
 	for _, nid := range s.MetaStatus.Next {
 		s.MetaStatus.next[nid] = s.dfa.Get(nid)
@@ -104,7 +131,7 @@ type MetaStatus struct {
 	FinalState   bool        `json:"final_state" yaml:"final_state"`
 	AfterCall    []string    `json:"after_call" yaml:"after_call"`
 	BeforeCall   []string    `json:"before_call" yaml:"before_call"`
-	load         bool
+	Load         bool
 }
 
 func (s *Status) Transfer(id string) bool {
